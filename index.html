@@ -3,12 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <base href="https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/" />
+
+    <!-- IMPORTANT: Use local paths, not CDN -->
+    <base href="/" />
+
     <title>Plague Inc</title>
 
     <style>
-      html,
-      body {
+      html, body {
         width: 100%;
         height: 100%;
         margin: 0;
@@ -52,23 +54,22 @@
   <body>
     <div id="loader">
       <div id="text">0 MB / 300 MB</div>
-      <div id="bar">
-        <div id="fill"></div>
-      </div>
+      <div id="bar"><div id="fill"></div></div>
     </div>
 
     <canvas id="unity-canvas"></canvas>
 
+    <!-- Load your local loader.js -->
     <script src="Build/bb0d9ecdb05db3e84da20bd14a4f84dc.loader.js"></script>
 
     <script>
-      const baseBuild = "https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/Build/";
-      const base = "https://cdn.jsdelivr.net/gh/Reeyuki/PlagueIncEvolved/";
+      /* LOCAL PATHS — FIXED */
+      const baseBuild = "Build/";
+      const base = "";
 
       const MAX_RETRIES = 3;
       const RETRY_DELAY_MS = 1000;
 
-      // Per-part progress tracking
       const partProgress = new Map();
       const totalGuess = 317 * 1024 * 1024;
 
@@ -91,7 +92,6 @@
             const res = await fetch(url);
             if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
 
-            // Reset this part's progress on retry
             if (attempt > 0) {
               partProgress.set(url, 0);
               updateUI();
@@ -117,6 +117,7 @@
               off += c.byteLength;
             }
             return out.buffer;
+
           } catch (err) {
             if (attempt < retries) {
               console.warn(`Retry ${attempt + 1}/${retries} for ${url}:`, err.message);
@@ -143,8 +144,6 @@
 
       async function loadFile(file) {
         const urls = buildUrls(file);
-
-        // All parts fetched in parallel with per-part retry and streaming progress
         const buffers = await Promise.all(urls.map((url) => fetchPartWithRetry(url)));
 
         let size = 0;
@@ -161,8 +160,10 @@
       }
 
       async function start() {
-        // wasm and data files loaded fully in parallel
-        const [wasm, data] = await Promise.all([loadFile(files[0]), loadFile(files[1])]);
+        const [wasm, data] = await Promise.all([
+          loadFile(files[0]),
+          loadFile(files[1])
+        ]);
 
         const wasmUrl = URL.createObjectURL(new Blob([wasm], { type: "application/wasm" }));
         const dataUrl = URL.createObjectURL(new Blob([data]));
@@ -173,7 +174,7 @@
           dataUrl: dataUrl,
           frameworkUrl: baseBuild + "b4b58f3ff6d98fbfb83482e25e0e9a5c.framework.js",
           codeUrl: wasmUrl,
-          streamingAssetsUrl: base + "StreamingAssets",
+          streamingAssetsUrl: "StreamingAssets",
           companyName: "Ndemic Creations",
           productName: "Plague Inc",
           productVersion: "1.18.3.2"
